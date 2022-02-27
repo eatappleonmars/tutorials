@@ -1,10 +1,18 @@
+directive @UPPERCASE on FIELD_DEFINITION
+directive @Snapshot(snapshotInput: SnapshotInput) on FIELD_DEFINITION
+
 type Query {
-    bookById(id: ID): Book
+    bookById(id: ID): Book @Snapshot
+#    bookById(id: ID, snapId: String): Book @Snapshot
+}
+
+input SnapshotInput {
+    id: ID
 }
 
 type Book {
     id: ID
-    name: String
+    name: String @UPPERCASE
     pageCount: Int
     author: Author
 }

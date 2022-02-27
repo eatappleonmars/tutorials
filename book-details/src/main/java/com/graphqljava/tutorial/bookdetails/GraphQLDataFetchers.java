@@ -1,12 +1,14 @@
 package com.graphqljava.tutorial.bookdetails;
 
 import com.google.common.collect.ImmutableMap;
+import graphql.execution.DataFetcherResult;
 import graphql.schema.DataFetcher;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class GraphQLDataFetchers {
@@ -39,18 +41,35 @@ public class GraphQLDataFetchers {
     );
 
     public DataFetcher getBookByIdDataFetcher() {
+
+        System.out.println("--- BookByIdDataFetcher has been registered ---");
+
         return dataFetchingEnvironment -> {
+            System.out.println("-- BookByIdDataFetcher is waiting for response ---");
+            // Sleep
+            TimeUnit.SECONDS.sleep(30);
+
             String bookId = dataFetchingEnvironment.getArgument("id");
-            return books
-                    .stream()
+            // Snapshot directive
+            Object snapshotInput = dataFetchingEnvironment.getArgument("snapshotInput");
+            System.out.println("  -- snapshotInput: " + snapshotInput + " --");
+
+            Map<String, String> firstBook = books.stream()
                     .filter(book -> book.get("id").equals(bookId))
                     .findFirst()
                     .orElse(null);
+
+            DataFetcherResult.Builder builder = DataFetcherResult.newResult().data(firstBook);
+            return builder.build();
         };
     }
 
     public DataFetcher getAuthorDataFetcher() {
+
+        System.out.println("--- AuthorDataFetcher has been registered ---");
+
         return dataFetchingEnvironment -> {
+            System.out.println("-- AuthorDataFetcher is waiting for response --");
             Map<String, String> book = dataFetchingEnvironment.getSource();
             String authorId = book.get("authorId");
             return authors

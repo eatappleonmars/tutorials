@@ -25,6 +25,9 @@ public class GraphQLProvider {
     @Autowired
     GraphQLDataFetchers graphQLDataFetchers;
 
+    @Autowired
+    InstrumentationProvider instrumentation;
+
     private GraphQL graphQL;
 
     @PostConstruct
@@ -32,10 +35,13 @@ public class GraphQLProvider {
         URL url = Resources.getResource("schema.graphqls");
         String sdl = Resources.toString(url, Charsets.UTF_8);
         GraphQLSchema graphQLSchema = buildSchema(sdl);
-        this.graphQL = GraphQL.newGraphQL(graphQLSchema).build();
+        this.graphQL = GraphQL.newGraphQL(graphQLSchema)
+                .instrumentation(instrumentation)
+                .build();
     }
 
     private GraphQLSchema buildSchema(String sdl) {
+        System.out.println("GraphQLProvider :: buildSchema");
         TypeDefinitionRegistry typeRegistry = new SchemaParser().parse(sdl);
         RuntimeWiring runtimeWiring = buildWiring();
         SchemaGenerator schemaGenerator = new SchemaGenerator();
@@ -43,11 +49,14 @@ public class GraphQLProvider {
     }
 
     private RuntimeWiring buildWiring() {
+        System.out.println("GraphQLProvider :: buildWiring");
         return RuntimeWiring.newRuntimeWiring()
                 .type(newTypeWiring("Query")
                         .dataFetcher("bookById", graphQLDataFetchers.getBookByIdDataFetcher()))
                 .type(newTypeWiring("Book")
                         .dataFetcher("author", graphQLDataFetchers.getAuthorDataFetcher()))
+                .directive("UPPERCASE", new UpperCaseDirective())
+                .directive("Snapshot", new SnapshotDirective())
                 .build();
     }
 
